@@ -3,7 +3,6 @@ import pygame,keyboard,time,random
 pygame.init()
 win = pygame.display.set_mode((780,780))
 
-
 aloittaja = 1 #0=pelaaja, 1=AI
 koko = 5
 win_condition = 4
@@ -125,161 +124,146 @@ def player_move():
 			vuoro += 1
 
 
+def vaakaVoitto(i):
+	pisteet = 0
+	last_p = 0
+	for j in range(len(board)):
+		if board[i][j] != 0:
+			if board[i][j] == last_p:
+				pisteet += 1
+			else:
+				last_p = board[i][j]
+				pisteet = 1
+		else:
+			pisteet = 0
+
+		if pisteet == win_condition:
+			if last_p == 1:
+				return -10
+			else:
+				return 10
+	return 0
+
+def pystyVoitto(i):
+	pisteet = 0
+	last_p = 0
+	for j in range(len(board)):
+		if board[j][i] != 0:
+			if board[j][i] == last_p:
+				pisteet += 1
+			else:
+				last_p = board[j][i]
+				pisteet = 1
+		else:
+			pisteet = 0
+
+		if pisteet == win_condition:
+			if last_p == 1:
+				return -10
+			else:
+				return 10
+	return 0
+
+
 #returnaa -10 jos pelaaja voittaa, 10 jos AI voittaa, 0 muuten
 def voitoncheck(board):
 	for i in range(len(board)):
 
-		#jos pelaaja voittaa vaakariveillä
-		pisteet = 0
-		for j in range(len(board)):
-			if board[i][j] == 1:
-				pisteet += 1
-			else:
-				pisteet = 0
-
-			if pisteet == win_condition:
-				return -10
+		#jos jompikumpi voittaa vaakariveillä
+		tulos = vaakaVoitto(i)
+		if tulos != 0:
+			return tulos
 
 
-		#jos pelaaja voittaa pystyriveillä
-		pisteet = 0
-		for j in range(len(board)):
-			if board[j][i] == 1:
-				pisteet += 1
-			else:
-				pisteet = 0
-
-			if pisteet == win_condition:
-				return -10
+		#jos jompikumpi voittaa pystyriveillä
+		tulos = pystyVoitto(i)
+		if tulos != 0:
+			return tulos
 
 
 
-
-		#jos AI voittaa vaakariveillä
-		pisteet = 0
-		for j in range(len(board)):
-			if board[i][j] == 2:
-				pisteet += 1
-			else:
-				pisteet = 0
-
-			if pisteet == win_condition:
-				return 10
-
-		#jos AI voittaa pystyriveillä
-		pisteet = 0
-		for j in range(len(board)):
-			if board[j][i] == 2:
-				pisteet += 1
-			else:
-				pisteet = 0
-
-			if pisteet == win_condition:
-				return 10
-
-
+	#jos jompikumpi voittaa vinoriveillä
 	for i in range(koko - win_condition + 1):
-		#jos pelaaja voittaa vinoriveillä
 		pisteet = 0
+		last_p = 0
 		for k in range(koko):
-			if k+i < koko and board[k+i][k] == 1:
-				pisteet += 1
+			if k+i < koko and board[k+i][k] != 0:
+				if board[k+i][k] == last_p:
+					pisteet += 1
+				else:
+					last_p = board[k+i][k]
+					pisteet = 1
 			else:
 				pisteet = 0
 
 			if pisteet == win_condition:
-				return -10
-
+				if last_p == 1:
+					return -10
+				else:
+					return 10
 
 		pisteet = 0
+		last_p = 0
 		for k in range(koko):
-			if k+1+i <= koko and board[-(k+1+i)][k] == 1:
-				pisteet += 1
+			if k+1+i <= koko and board[-(k+1+i)][k] != 0:
+				if board[-(k+1+i)][k] == last_p:
+					pisteet += 1
+				else:
+					last_p = board[-(k+1+i)][k]
+					pisteet = 1
 			else:
 				pisteet = 0
 
 			if pisteet == win_condition:
-				return -10
-
+				if last_p == 1:
+					return -10
+				else:
+					return 10
 
 		pisteet = 0
+		last_p = 0
 		for k in range(koko):
-			if k+i < koko and board[k][k+i] == 1:
-				pisteet += 1
+			if k+i < koko and board[k][k+i] != 0:
+				if board[k][k+i] == last_p:
+					pisteet += 1
+				else:
+					last_p = board[k][k+i]
+					pisteet = 1
 			else:
 				pisteet = 0
 
 			if pisteet == win_condition:
-				return -10
+				if last_p == 1:
+					return -10
+				else:
+					return 10
 
 
 		pisteet = 0
+		last_p = 0
 		for k in range(koko):
-			if k+i < koko and board[-(k+1)][k+i] == 1:
-				pisteet += 1
+			if k+i < koko and board[-(k+1)][k+i] != 0:
+				if board[-(k+1)][k+i] == last_p:
+					pisteet += 1
+				else:
+					last_p = board[-(k+1)][k+i]
+					pisteet = 1
 			else:
 				pisteet = 0
 
 			if pisteet == win_condition:
-				return -10
-
-
-
-		#jos AI voittaa vinoriveillä
-		pisteet = 0
-		for k in range(koko):
-			if k+i < koko and board[k+i][k] == 2:
-				pisteet += 1
-			else:
-				pisteet = 0
-
-			if pisteet == win_condition:
-				return 10
-
-
-		pisteet = 0
-		for k in range(koko):
-			if k+1+i <= koko and board[-(k+1+i)][k] == 2:
-				pisteet += 1
-			else:
-				pisteet = 0
-
-			if pisteet == win_condition:
-				return 10
-
-
-		pisteet = 0
-		for k in range(koko):
-			if k+i < koko and board[k][k+i] == 2:
-				pisteet += 1
-			else:
-				pisteet = 0
-
-			if pisteet == win_condition:
-				return 10
-
-
-		pisteet = 0
-		for k in range(koko):
-			if k+i < koko and board[-(k+1)][k+i] == 2:
-				pisteet += 1
-			else:
-				pisteet = 0
-
-			if pisteet == win_condition:
-				return 10
-
-
-
+				if last_p == 1:
+					return -10
+				else:
+					return 10
 
 	return 0
 
 def game_over(board):
 	done = True
 	for i in range(len(board)):
-		for j in range(len(board)):
-			if board[i][j] == 0:
-				done = False
+		if 0 in board[i]:
+			done = False
 
 	if voitoncheck(board) != 0 or done:
 		return True
