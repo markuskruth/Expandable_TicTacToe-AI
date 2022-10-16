@@ -4,9 +4,12 @@ pygame.init()
 win = pygame.display.set_mode((780,780))
 
 aloittaja = 1 #0=pelaaja, 1=AI
-koko = 5
-win_condition = 4
+koko = 7
+win_condition = 5
 depth = 3
+
+weight = 3
+synti = 0
 
 
 #0 = tyhjä, 1 = pelaaja, 2 = AI
@@ -124,79 +127,106 @@ def player_move():
 			vuoro += 1
 
 
-def vaakaVoitto(i):
+def vaakaVoitto(i,board):
+	global weight
 	pisteet = 0
 	last_p = 0
-	max_pisteet_p = 0
-	max_pisteet_ai = 0
+	max_pisteet_p_final = 0
+	max_pisteet_ai_final = 0
 	for j in range(len(board)):
-		if board[i][j] != 0:
+		if board[i][j] != 0: #jos tarkastellaan kohtaa jossa on pelaajan tai AI:n merkki
 			if board[i][j] == last_p:
 				pisteet += 1
-				if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
-					if last_p == 1:
-						max_pisteet_p = pisteet
-					else:
-						max_pisteet_ai = pisteet
 			else:
+				if last_p == 1:
+					max_pisteet_p_final += pisteet**weight-1
+				elif last_p == 2:
+					max_pisteet_ai_final += pisteet**weight-1
 				last_p = board[i][j]
 				pisteet = 1
 		else:
+			if last_p == 1:
+				max_pisteet_p_final += pisteet**weight-1
+			elif last_p == 2:
+				max_pisteet_ai_final += pisteet**weight-1
 			pisteet = 0
+			last_p = 0
 
 		if pisteet == win_condition:
 			if last_p == 1:
 				return -1000
 			else:
 				return 1000
-	return max_pisteet_ai**3 - max_pisteet_p**3
 
-def pystyVoitto(i):
+	if last_p == 1:
+		max_pisteet_p_final += pisteet**weight-1
+	elif last_p == 2:
+		max_pisteet_ai_final += pisteet**weight-1
+
+
+	return max_pisteet_ai_final - max_pisteet_p_final
+
+def pystyVoitto(i,board):
+	global weight
 	pisteet = 0
 	last_p = 0
-	max_pisteet_p = 0
-	max_pisteet_ai = 0
+	max_pisteet_p_final = 0
+	max_pisteet_ai_final = 0
 	for j in range(len(board)):
 		if board[j][i] != 0:
 			if board[j][i] == last_p:
 				pisteet += 1
-				if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
-					if last_p == 1:
-						max_pisteet_p = pisteet
-					else:
-						max_pisteet_ai = pisteet
 			else:
+				if last_p == 1:
+					max_pisteet_p_final += pisteet**weight-1
+				elif last_p == 2:
+					max_pisteet_ai_final += pisteet**weight-1
 				last_p = board[j][i]
 				pisteet = 1
 		else:
+			if last_p == 1:
+				max_pisteet_p_final += pisteet**weight-1
+			elif last_p == 2:
+				max_pisteet_ai_final += pisteet**weight-1
 			pisteet = 0
+			last_p = 0
 
 		if pisteet == win_condition:
 			if last_p == 1:
 				return -1000
 			else:
 				return 1000
-	return max_pisteet_ai**3 - max_pisteet_p**3
+
+	if last_p == 1:
+		max_pisteet_p_final += pisteet**weight-1
+	elif last_p == 2:
+		max_pisteet_ai_final += pisteet**weight-1
+
+	return max_pisteet_ai_final - max_pisteet_p_final
 
 #returnaa -10 jos pelaaja voittaa, 10 jos AI voittaa, 0 muuten
 def voitoncheck(board):
+	global weight
+
 	move_eval = 0
 	for i in range(len(board)):
 
 		#jos jompikumpi voittaa vaakariveillä
-		tulos = vaakaVoitto(i)
+		tulos = vaakaVoitto(i,board)
 		if abs(tulos) == 1000:
 			return tulos
 
+		#print("Vaakatulos:",tulos)
 		move_eval += tulos
 
 
 
 		#jos jompikumpi voittaa pystyriveillä
-		tulos = pystyVoitto(i)
+		tulos = pystyVoitto(i,board)
 		if abs(tulos) == 1000:
 			return tulos
 
+		#print("Pystytulos:",tulos)
 		move_eval += tulos
 
 
@@ -211,16 +241,20 @@ def voitoncheck(board):
 			if k+i < koko and board[k+i][k] != 0:
 				if board[k+i][k] == last_p:
 					pisteet += 1
-					if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
-						if last_p == 1:
-							max_pisteet_p = pisteet
-						else:
-							max_pisteet_ai = pisteet
 				else:
+					if last_p == 1:
+						max_pisteet_p += pisteet**weight-1
+					elif last_p == 2:
+						max_pisteet_ai += pisteet**weight-1
 					last_p = board[k+i][k]
 					pisteet = 1
 			else:
+				if last_p == 1:
+					max_pisteet_p += pisteet**weight-1
+				elif last_p == 2:
+					max_pisteet_ai += pisteet**weight-1
 				pisteet = 0
+				last_p = 0
 
 			if pisteet == win_condition:
 				if last_p == 1:
@@ -228,7 +262,12 @@ def voitoncheck(board):
 				else:
 					return 1000
 
-		max_pisteet = max_pisteet_ai**3 - max_pisteet_p**3
+		if last_p == 1:
+			max_pisteet_p += pisteet**weight-1
+		elif last_p == 2:
+			max_pisteet_ai += pisteet**weight-1
+
+		max_pisteet = max_pisteet_ai - max_pisteet_p
 		move_eval += max_pisteet
 
 		max_pisteet_p = 0
@@ -239,16 +278,21 @@ def voitoncheck(board):
 			if k+1+i <= koko and board[-(k+1+i)][k] != 0:
 				if board[-(k+1+i)][k] == last_p:
 					pisteet += 1
-					if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
-						if last_p == 1:
-							max_pisteet_p = pisteet
-						else:
-							max_pisteet_ai = pisteet
+						
 				else:
+					if last_p == 1:
+						max_pisteet_p += pisteet**weight-1
+					elif last_p == 2:
+						max_pisteet_ai += pisteet**weight-1
 					last_p = board[-(k+1+i)][k]
 					pisteet = 1
 			else:
+				if last_p == 1:
+					max_pisteet_p += pisteet**weight-1
+				elif last_p == 2:
+					max_pisteet_ai += pisteet**weight-1
 				pisteet = 0
+				last_p = 0
 
 			if pisteet == win_condition:
 				if last_p == 1:
@@ -256,7 +300,12 @@ def voitoncheck(board):
 				else:
 					return 1000
 
-		max_pisteet = max_pisteet_ai**3 - max_pisteet_p**3
+		if last_p == 1:
+			max_pisteet_p += pisteet**weight-1
+		elif last_p == 2:
+			max_pisteet_ai += pisteet**weight-1
+
+		max_pisteet = max_pisteet_ai - max_pisteet_p
 		move_eval += max_pisteet
 
 		max_pisteet_p = 0
@@ -267,16 +316,20 @@ def voitoncheck(board):
 			if k+i < koko and board[k][k+i] != 0:
 				if board[k][k+i] == last_p:
 					pisteet += 1
-					if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
-						if last_p == 1:
-							max_pisteet_p = pisteet
-						else:
-							max_pisteet_ai = pisteet
 				else:
+					if last_p == 1:
+						max_pisteet_p += pisteet**weight-1
+					elif last_p == 2:
+						max_pisteet_ai += pisteet**weight-1
 					last_p = board[k][k+i]
 					pisteet = 1
 			else:
+				if last_p == 1:
+					max_pisteet_p += pisteet**weight-1
+				elif last_p == 2:
+					max_pisteet_ai += pisteet**weight-1
 				pisteet = 0
+				last_p = 0
 
 			if pisteet == win_condition:
 				if last_p == 1:
@@ -285,7 +338,12 @@ def voitoncheck(board):
 					return 1000
 
 
-		max_pisteet = max_pisteet_ai**3 - max_pisteet_p**3
+		if last_p == 1:
+			max_pisteet_p += pisteet**weight-1
+		elif last_p == 2:
+			max_pisteet_ai += pisteet**weight-1
+
+		max_pisteet = max_pisteet_ai - max_pisteet_p
 		move_eval += max_pisteet
 
 		max_pisteet_p = 0
@@ -296,16 +354,21 @@ def voitoncheck(board):
 			if k+i < koko and board[-(k+1)][k+i] != 0:
 				if board[-(k+1)][k+i] == last_p:
 					pisteet += 1
-					if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
-						if last_p == 1:
-							max_pisteet_p = pisteet
-						else:
-							max_pisteet_ai = pisteet
+					
 				else:
+					if last_p == 1:
+						max_pisteet_p += pisteet**weight-1
+					elif last_p == 2:
+						max_pisteet_ai += pisteet**weight-1
 					last_p = board[-(k+1)][k+i]
 					pisteet = 1
 			else:
+				if last_p == 1:
+					max_pisteet_p += pisteet**weight-1
+				elif last_p == 2:
+					max_pisteet_ai += pisteet**weight-1
 				pisteet = 0
+				last_p = 0
 
 			if pisteet == win_condition:
 				if last_p == 1:
@@ -313,7 +376,12 @@ def voitoncheck(board):
 				else:
 					return 1000
 
-		max_pisteet = max_pisteet_ai**3 - max_pisteet_p**3
+		if last_p == 1:
+			max_pisteet_p += pisteet**weight-1
+		elif last_p == 2:
+			max_pisteet_ai += pisteet**weight-1
+
+		max_pisteet = max_pisteet_ai - max_pisteet_p
 		move_eval += max_pisteet
 
 	return move_eval
@@ -344,7 +412,7 @@ def legal_moves(board):
 
 
 def minimax(board,isMax,depth,alpha,beta):
-	global depthcounter
+	global depthcounter,synti
 
 	eval = voitoncheck(board)
 
@@ -371,7 +439,7 @@ def minimax(board,isMax,depth,alpha,beta):
 
 		for move in kaikki_movet: #käydään läpi kaikki mahdolliset siirrot
 			if koko >= 5:
-				if good_move(board,move,2):
+				if good_move(board,move):
 					board[move[0]][move[1]] = 2 #tehdään siirto laudalla
 
 					maksimoi = max(maksimoi, minimax(board,False,depth,alpha,beta))
@@ -380,7 +448,7 @@ def minimax(board,isMax,depth,alpha,beta):
 					board[move[0]][move[1]] = 0 #undoataan tehty move
 
 					# Alpha Beta Pruning
-					if beta <= alpha:
+					if beta <= alpha+synti:
 						break
 			else:
 				board[move[0]][move[1]] = 2 #tehdään siirto laudalla
@@ -391,7 +459,7 @@ def minimax(board,isMax,depth,alpha,beta):
 				board[move[0]][move[1]] = 0 #undoataan tehty move
 
 				# Alpha Beta Pruning
-				if beta <= alpha:
+				if beta <= alpha+synti:
 					break
 
 
@@ -403,7 +471,7 @@ def minimax(board,isMax,depth,alpha,beta):
 
 		for move in kaikki_movet:
 			if koko >= 5:
-				if good_move(board,move,1):
+				if good_move(board,move):
 					board[move[0]][move[1]] = 1 #tehdään siirto laudalla
 
 					minimoi = min(minimoi,minimax(board,True,depth+1,alpha,beta))
@@ -411,7 +479,7 @@ def minimax(board,isMax,depth,alpha,beta):
 
 					board[move[0]][move[1]] = 0
 
-					if beta <= alpha:
+					if beta <= alpha+synti:
 						break
 			else:
 				board[move[0]][move[1]] = 1 #tehdään siirto laudalla
@@ -421,7 +489,7 @@ def minimax(board,isMax,depth,alpha,beta):
 
 				board[move[0]][move[1]] = 0
 
-				if beta <= alpha:
+				if beta <= alpha+synti:
 					break
 
 		return minimoi
@@ -442,24 +510,22 @@ def engine(board):
 		looppi += 1
 		print(round(looppi/len(kaikki_movet)*100),"%")
 
-		if vuoro == 3 and (move[0]<1 or move[0]>3 or move[1]<1 or move[1]>3):
-			pass
+
+		if good_move(board,move):
+			depthcounter = depth
 		else:
-			if good_move(board,move,2):
-				depthcounter = depth
-			else:
-				depthcounter = depth-1
+			depthcounter = depth
 
-			board[move[0]][move[1]] = 2
+		board[move[0]][move[1]] = 2
 
-			eval = minimax(board,False,0,-999,999)
+		eval = minimax(board,False,0,-999,999)
 
-			board[move[0]][move[1]] = 0
+		board[move[0]][move[1]] = 0
 
-			if eval >= paras_move_eval:
-				parhaat_movet.append([move,eval])
-				#paras_move = move
-				paras_move_eval = eval
+		if eval >= paras_move_eval:
+			parhaat_movet.append([move,eval])
+			#paras_move = move
+			paras_move_eval = eval
 
 	best_eval = -9999
 	best_moves = []
@@ -477,7 +543,7 @@ def engine(board):
 	return final_move
 
 
-def good_move(board,move,who):
+def good_move(board,move):
 	paikat = []
 
 	for i in range(koko):
@@ -541,31 +607,32 @@ def distance(board):
 
 
 
+if __name__ == "__main__":
+	first_move = True
+	while True:
+		if keyboard.is_pressed("q"):
+			time.sleep(0.2)
+			pygame.display.quit()
+			pygame.quit()
+			exit()
 
+		tila = game_over(board)
 
+		if vuoro%2 == 0:
+			if tila == False:
+				player_move()
 
-first_move = True
-while True:
-	if keyboard.is_pressed("q"):
-		time.sleep(0.2)
-		pygame.display.quit()
-		pygame.quit()
-		exit()
+		else:
+			if tila == False:
+				if first_move and vuoro == 1:
+					siirto = [round(koko/2),round(koko/2)]
 
-	tila = game_over(board)
+				else:
+					alkuAika = time.time()
+					siirto = engine(board)
+					loppuAika = time.time()
+					print("Runtime:",str(round(loppuAika - alkuAika,2))+"s")
+				board[siirto[0]][siirto[1]] = 2
+				vuoro += 1
 
-	if vuoro%2 == 0:
-		if tila == False:
-			player_move()
-
-	else:
-		if tila == False:
-			if first_move and vuoro == 1:
-				siirto = [round(koko/2),round(koko/2)]
-
-			else:
-				siirto = engine(board)
-			board[siirto[0]][siirto[1]] = 2
-			vuoro += 1
-
-	display()
+		display()
