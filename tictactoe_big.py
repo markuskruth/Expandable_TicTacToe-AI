@@ -4,9 +4,9 @@ pygame.init()
 win = pygame.display.set_mode((780,780))
 
 aloittaja = 1 #0=pelaaja, 1=AI
-koko = 5
+koko = 6
 win_condition = 4
-depth = 4
+depth = 3
 
 
 #0 = tyhjä, 1 = pelaaja, 2 = AI
@@ -163,7 +163,6 @@ def pystyVoitto(i):
 			else:
 				return 10
 	return 0
-
 
 #returnaa -10 jos pelaaja voittaa, 10 jos AI voittaa, 0 muuten
 def voitoncheck(board):
@@ -423,7 +422,7 @@ def good_move(board,move,who):
 
 	for i in range(koko):
 		for j in range(koko):
-			if board[i][j] == who:
+			if board[i][j] != 0:
 				paikat.append([i,j])
 
 	y = move[0]
@@ -501,10 +500,9 @@ while True:
 
 	else:
 		if tila == False:
-			if koko == 5 and first_move and vuoro == 1:
-				siirto = [2,2]
-			elif random.randint(1,3) == 1 and koko == 3 and first_move and vuoro == 1:
-				siirto = [1,1]
+			if first_move and vuoro == 1:
+				siirto = [round(koko/2),round(koko/2)]
+
 			else:
 				siirto = engine(board)
 			board[siirto[0]][siirto[1]] = 2
