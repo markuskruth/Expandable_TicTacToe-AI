@@ -127,10 +127,17 @@ def player_move():
 def vaakaVoitto(i):
 	pisteet = 0
 	last_p = 0
+	max_pisteet_p = 0
+	max_pisteet_ai = 0
 	for j in range(len(board)):
 		if board[i][j] != 0:
 			if board[i][j] == last_p:
 				pisteet += 1
+				if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
+					if last_p == 1:
+						max_pisteet_p = pisteet
+					else:
+						max_pisteet_ai = pisteet
 			else:
 				last_p = board[i][j]
 				pisteet = 1
@@ -142,15 +149,22 @@ def vaakaVoitto(i):
 				return -10
 			else:
 				return 10
-	return 0
+	return max_pisteet_ai - max_pisteet_p
 
 def pystyVoitto(i):
 	pisteet = 0
 	last_p = 0
+	max_pisteet_p = 0
+	max_pisteet_ai = 0
 	for j in range(len(board)):
 		if board[j][i] != 0:
 			if board[j][i] == last_p:
 				pisteet += 1
+				if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
+					if last_p == 1:
+						max_pisteet_p = pisteet
+					else:
+						max_pisteet_ai = pisteet
 			else:
 				last_p = board[j][i]
 				pisteet = 1
@@ -162,33 +176,48 @@ def pystyVoitto(i):
 				return -10
 			else:
 				return 10
-	return 0
+	return max_pisteet_ai - max_pisteet_p
 
 #returnaa -10 jos pelaaja voittaa, 10 jos AI voittaa, 0 muuten
 def voitoncheck(board):
+	move_eval = 0
 	for i in range(len(board)):
 
 		#jos jompikumpi voittaa vaakariveillä
 		tulos = vaakaVoitto(i)
-		if tulos != 0:
+		if abs(tulos) == 10:
 			return tulos
+
+		if tulos > move_eval:
+			move_eval = tulos
+
 
 
 		#jos jompikumpi voittaa pystyriveillä
 		tulos = pystyVoitto(i)
-		if tulos != 0:
+		if abs(tulos) == 10:
 			return tulos
+			
+		if tulos > move_eval:
+			move_eval = tulos
 
 
 
 	#jos jompikumpi voittaa vinoriveillä
 	for i in range(koko - win_condition + 1):
+		max_pisteet_p = 0
+		max_pisteet_ai = 0
 		pisteet = 0
 		last_p = 0
 		for k in range(koko):
 			if k+i < koko and board[k+i][k] != 0:
 				if board[k+i][k] == last_p:
 					pisteet += 1
+					if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
+						if last_p == 1:
+							max_pisteet_p = pisteet
+						else:
+							max_pisteet_ai = pisteet
 				else:
 					last_p = board[k+i][k]
 					pisteet = 1
@@ -201,12 +230,23 @@ def voitoncheck(board):
 				else:
 					return 10
 
+		max_pisteet = max_pisteet_ai - max_pisteet_p
+		if max_pisteet > move_eval:
+			move_eval = max_pisteet
+
+		max_pisteet_p = 0
+		max_pisteet_ai = 0
 		pisteet = 0
 		last_p = 0
 		for k in range(koko):
 			if k+1+i <= koko and board[-(k+1+i)][k] != 0:
 				if board[-(k+1+i)][k] == last_p:
 					pisteet += 1
+					if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
+						if last_p == 1:
+							max_pisteet_p = pisteet
+						else:
+							max_pisteet_ai = pisteet
 				else:
 					last_p = board[-(k+1+i)][k]
 					pisteet = 1
@@ -219,12 +259,23 @@ def voitoncheck(board):
 				else:
 					return 10
 
+		max_pisteet = max_pisteet_ai - max_pisteet_p
+		if max_pisteet > move_eval:
+			move_eval = max_pisteet
+
+		max_pisteet_p = 0
+		max_pisteet_ai = 0
 		pisteet = 0
 		last_p = 0
 		for k in range(koko):
 			if k+i < koko and board[k][k+i] != 0:
 				if board[k][k+i] == last_p:
 					pisteet += 1
+					if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
+						if last_p == 1:
+							max_pisteet_p = pisteet
+						else:
+							max_pisteet_ai = pisteet
 				else:
 					last_p = board[k][k+i]
 					pisteet = 1
@@ -238,12 +289,23 @@ def voitoncheck(board):
 					return 10
 
 
+		max_pisteet = max_pisteet_ai - max_pisteet_p
+		if max_pisteet > move_eval:
+			move_eval = max_pisteet
+
+		max_pisteet_p = 0
+		max_pisteet_ai = 0
 		pisteet = 0
 		last_p = 0
 		for k in range(koko):
 			if k+i < koko and board[-(k+1)][k+i] != 0:
 				if board[-(k+1)][k+i] == last_p:
 					pisteet += 1
+					if pisteet > max_pisteet_p or pisteet > max_pisteet_ai:
+						if last_p == 1:
+							max_pisteet_p = pisteet
+						else:
+							max_pisteet_ai = pisteet
 				else:
 					last_p = board[-(k+1)][k+i]
 					pisteet = 1
@@ -256,7 +318,11 @@ def voitoncheck(board):
 				else:
 					return 10
 
-	return 0
+		max_pisteet = max_pisteet_ai - max_pisteet_p
+		if max_pisteet > move_eval:
+			move_eval = max_pisteet
+
+	return move_eval
 
 def game_over(board):
 	done = True
@@ -264,7 +330,7 @@ def game_over(board):
 		if 0 in board[i]:
 			done = False
 
-	if voitoncheck(board) != 0 or done:
+	if abs(voitoncheck(board)) == 10 or done:
 		return True
 
 	return False
@@ -412,7 +478,7 @@ def engine(board):
 
 	final_move = random.choice(best_moves)
 
-	#print("Tämän moven evaluation on:",best_eval)
+	print("Tämän moven evaluation on:",best_eval)
 
 	return final_move
 
