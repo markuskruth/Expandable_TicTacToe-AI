@@ -4,7 +4,7 @@ pygame.init()
 win = pygame.display.set_mode((780,780))
 
 aloittaja = 1 #0=pelaaja, 1=AI
-koko = 6
+koko = 5
 win_condition = 4
 depth = 3
 
@@ -146,10 +146,10 @@ def vaakaVoitto(i):
 
 		if pisteet == win_condition:
 			if last_p == 1:
-				return -10
+				return -1000
 			else:
-				return 10
-	return max_pisteet_ai - max_pisteet_p
+				return 1000
+	return max_pisteet_ai**3 - max_pisteet_p**3
 
 def pystyVoitto(i):
 	pisteet = 0
@@ -173,10 +173,10 @@ def pystyVoitto(i):
 
 		if pisteet == win_condition:
 			if last_p == 1:
-				return -10
+				return -1000
 			else:
-				return 10
-	return max_pisteet_ai - max_pisteet_p
+				return 1000
+	return max_pisteet_ai**3 - max_pisteet_p**3
 
 #returnaa -10 jos pelaaja voittaa, 10 jos AI voittaa, 0 muuten
 def voitoncheck(board):
@@ -185,21 +185,19 @@ def voitoncheck(board):
 
 		#jos jompikumpi voittaa vaakariveillä
 		tulos = vaakaVoitto(i)
-		if abs(tulos) == 10:
+		if abs(tulos) == 1000:
 			return tulos
 
-		if tulos > move_eval:
-			move_eval = tulos
+		move_eval += tulos
 
 
 
 		#jos jompikumpi voittaa pystyriveillä
 		tulos = pystyVoitto(i)
-		if abs(tulos) == 10:
+		if abs(tulos) == 1000:
 			return tulos
-			
-		if tulos > move_eval:
-			move_eval = tulos
+
+		move_eval += tulos
 
 
 
@@ -226,13 +224,12 @@ def voitoncheck(board):
 
 			if pisteet == win_condition:
 				if last_p == 1:
-					return -10
+					return -1000
 				else:
-					return 10
+					return 1000
 
-		max_pisteet = max_pisteet_ai - max_pisteet_p
-		if max_pisteet > move_eval:
-			move_eval = max_pisteet
+		max_pisteet = max_pisteet_ai**3 - max_pisteet_p**3
+		move_eval += max_pisteet
 
 		max_pisteet_p = 0
 		max_pisteet_ai = 0
@@ -255,13 +252,12 @@ def voitoncheck(board):
 
 			if pisteet == win_condition:
 				if last_p == 1:
-					return -10
+					return -1000
 				else:
-					return 10
+					return 1000
 
-		max_pisteet = max_pisteet_ai - max_pisteet_p
-		if max_pisteet > move_eval:
-			move_eval = max_pisteet
+		max_pisteet = max_pisteet_ai**3 - max_pisteet_p**3
+		move_eval += max_pisteet
 
 		max_pisteet_p = 0
 		max_pisteet_ai = 0
@@ -284,14 +280,13 @@ def voitoncheck(board):
 
 			if pisteet == win_condition:
 				if last_p == 1:
-					return -10
+					return -1000
 				else:
-					return 10
+					return 1000
 
 
-		max_pisteet = max_pisteet_ai - max_pisteet_p
-		if max_pisteet > move_eval:
-			move_eval = max_pisteet
+		max_pisteet = max_pisteet_ai**3 - max_pisteet_p**3
+		move_eval += max_pisteet
 
 		max_pisteet_p = 0
 		max_pisteet_ai = 0
@@ -314,13 +309,12 @@ def voitoncheck(board):
 
 			if pisteet == win_condition:
 				if last_p == 1:
-					return -10
+					return -1000
 				else:
-					return 10
+					return 1000
 
-		max_pisteet = max_pisteet_ai - max_pisteet_p
-		if max_pisteet > move_eval:
-			move_eval = max_pisteet
+		max_pisteet = max_pisteet_ai**3 - max_pisteet_p**3
+		move_eval += max_pisteet
 
 	return move_eval
 
@@ -330,7 +324,7 @@ def game_over(board):
 		if 0 in board[i]:
 			done = False
 
-	if abs(voitoncheck(board)) == 10 or done:
+	if abs(voitoncheck(board)) == 1000 or done:
 		return True
 
 	return False
@@ -355,12 +349,12 @@ def minimax(board,isMax,depth,alpha,beta):
 	eval = voitoncheck(board)
 
 	#jos pelaaja on voittanut
-	if eval == -10:
-		return eval+depth
+	if eval == -1000:
+		return eval
 
 	#jos AI on voittanut
-	if eval == 10:
-		return eval-depth
+	if eval == 1000:
+		return eval
 
 	kaikki_movet = legal_moves(board)
 
@@ -373,7 +367,7 @@ def minimax(board,isMax,depth,alpha,beta):
 
 
 	if isMax:
-		maksimoi = -999
+		maksimoi = -9999
 
 		for move in kaikki_movet: #käydään läpi kaikki mahdolliset siirrot
 			if koko >= 5:
@@ -405,7 +399,7 @@ def minimax(board,isMax,depth,alpha,beta):
 
 
 	else:
-		minimoi = 999
+		minimoi = 9999
 
 		for move in kaikki_movet:
 			if koko >= 5:
@@ -439,7 +433,7 @@ def engine(board):
 	looppi = 0
 	parhaat_movet = []
 
-	paras_move_eval = -999
+	paras_move_eval = -9999
 	paras_move = [0,0]
 
 	kaikki_movet = legal_moves(board)
@@ -467,7 +461,7 @@ def engine(board):
 				#paras_move = move
 				paras_move_eval = eval
 
-	best_eval = -999
+	best_eval = -9999
 	best_moves = []
 	for k in range(len(parhaat_movet)):
 	  if parhaat_movet[k][1] >= best_eval:
