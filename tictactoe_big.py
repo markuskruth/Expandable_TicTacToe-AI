@@ -1,34 +1,32 @@
-import pygame,keyboard,time,random
+import keyboard,time,random,copy
+import concurrent.futures
+import multiprocessing
 
-pygame.init()
 size = 780
-win = pygame.display.set_mode((size,size))
 
 aloittaja = 1 #0=pelaaja, 1=AI
-koko = 7
-win_condition = 5
+koko = 6
+win_condition = 4
 depth = 3
-
-bestEvalSoFar = 0
-latestEval = 0
 
 weight = 3
 synti = 5
-eka = True
+
+
 #0 = tyhjä, 1 = pelaaja, 2 = AI
-board = [[]]
+lauta = [[]]
 for i in range(koko):
 	for j in range(koko):
-		board[i].append(0)
+		lauta[i].append(0)
 
 	if i != koko-1:
-		board.append([])
+		lauta.append([])
 
 
 vuoro = aloittaja
 
-def display():
-	global board,vuoro
+def display(board):
+	global vuoro
 
 	pygame.event.get()
 	mouse = pygame.mouse.get_pos()
@@ -109,7 +107,7 @@ def display():
 
 	pygame.display.update()
 
-def player_move():
+def player_move(board):
 	global vuoro
 
 	pygame.event.get()
@@ -164,11 +162,10 @@ def vaakaVoitto(i,board):
 			else:
 				return 1000
 
-	#näihin extra -1 koska ne kuvaavat suoria, jotka päättyvät reunoihin
 	if last_p == 1:
-		max_pisteet_p_final += pisteet**weight-synti-2
+		max_pisteet_p_final += pisteet**weight-1
 	elif last_p == 2:
-		max_pisteet_ai_final += pisteet**weight-synti-2
+		max_pisteet_ai_final += pisteet**weight-1
 
 
 	return max_pisteet_ai_final - max_pisteet_p_final
@@ -205,9 +202,9 @@ def pystyVoitto(i,board):
 				return 1000
 
 	if last_p == 1:
-		max_pisteet_p_final += pisteet**weight-synti-2
+		max_pisteet_p_final += pisteet**weight-1
 	elif last_p == 2:
-		max_pisteet_ai_final += pisteet**weight-synti-2
+		max_pisteet_ai_final += pisteet**weight-1
 
 	return max_pisteet_ai_final - max_pisteet_p_final
 
@@ -247,7 +244,7 @@ def voitoncheck(board):
 		pisteet = 0
 		max_pisteet = 0
 		last_p = 0
-		for k in range(koko-i):
+		for k in range(koko):
 			if k+i < koko and board[k+i][k] != 0:
 				if board[k+i][k] == last_p:
 					pisteet += 1
@@ -273,9 +270,9 @@ def voitoncheck(board):
 					return 1000
 
 		if last_p == 1:
-			max_pisteet_p += pisteet**weight-synti-2
+			max_pisteet_p += pisteet**weight-1
 		elif last_p == 2:
-			max_pisteet_ai += pisteet**weight-synti-2
+			max_pisteet_ai += pisteet**weight-1
 
 		max_pisteet = max_pisteet_ai - max_pisteet_p
 		move_eval += max_pisteet
@@ -287,7 +284,7 @@ def voitoncheck(board):
 		max_pisteet = 0
 		pisteet = 0
 		last_p = 0
-		for k in range(koko-i):
+		for k in range(koko):
 			if k+1+i <= koko and board[-(k+1+i)][k] != 0:
 				if board[-(k+1+i)][k] == last_p:
 					pisteet += 1
@@ -314,9 +311,9 @@ def voitoncheck(board):
 					return 1000
 
 		if last_p == 1:
-			max_pisteet_p += pisteet**weight-synti-2
+			max_pisteet_p += pisteet**weight-1
 		elif last_p == 2:
-			max_pisteet_ai += pisteet**weight-synti-2
+			max_pisteet_ai += pisteet**weight-1
 
 		max_pisteet = max_pisteet_ai - max_pisteet_p
 		move_eval += max_pisteet
@@ -356,9 +353,9 @@ def voitoncheck(board):
 
 
 		if last_p == 1:
-			max_pisteet_p += pisteet**weight-synti-2
+			max_pisteet_p += pisteet**weight-1
 		elif last_p == 2:
-			max_pisteet_ai += pisteet**weight-synti-2
+			max_pisteet_ai += pisteet**weight-1
 
 		max_pisteet = max_pisteet_ai - max_pisteet_p
 		move_eval += max_pisteet
@@ -398,9 +395,9 @@ def voitoncheck(board):
 						return 1000
 
 		if last_p == 1:
-			max_pisteet_p += pisteet**weight-synti-2
+			max_pisteet_p += pisteet**weight-1
 		elif last_p == 2:
-			max_pisteet_ai += pisteet**weight-synti-2
+			max_pisteet_ai += pisteet**weight-1
 
 		max_pisteet = max_pisteet_ai - max_pisteet_p
 		move_eval += max_pisteet
@@ -424,22 +421,16 @@ def game_over(board):
 def legal_moves(board):
 	moves = []
 
-	#attempt in optimization not sure if actually faster
-	i = 0
-	j = 0
-	for row in board:
-		for n in row:
-			if n == 0:
+	for i in range(len(board)):
+		for j in range(len(board)):
+			if board[i][j] == 0:
 				moves.append([i,j])
-			j += 1
-		i += 1
-		j = 0
+
 	return moves
 
 
-counter = 0
 def minimax(board,isMax,depth,alpha,beta):
-	global depthcounter,synti,latestEval, bestEvalSoFar, counter
+	global depthcounter,synti
 
 	eval = voitoncheck(board)
 
@@ -451,23 +442,19 @@ def minimax(board,isMax,depth,alpha,beta):
 	if eval == 1000:
 		return eval
 
-	if depth >= depthcounter:
-		#TODO
-		#if depth != depthcounter+1 and eval > latestEval and bestEvalSoFar < eval:
-		#	print("Depth:", depth)
-			#pass
-		#else:
-			counter += 1
-			return eval
-
 	kaikki_movet = legal_moves(board)
+
 	#jos tasapeli
 	if len(kaikki_movet) == 0:
 		return 0
 
+	if depth == depthcounter:
+		return eval
+
 
 	if isMax:
 		maksimoi = -9999
+
 		for move in kaikki_movet: #käydään läpi kaikki mahdolliset siirrot
 			if good_move(board,move):
 				board[move[0]][move[1]] = 2 #tehdään siirto laudalla
@@ -503,9 +490,24 @@ def minimax(board,isMax,depth,alpha,beta):
 		return minimoi
 
 
+def subEngine(board,move):
+	global depthcounter
+	if good_move(board,move):
+		depthcounter = depth
+	else:
+		depthcounter = depth-0
+
+	boarderi = copy.deepcopy(board)
+
+	boarderi[move[0]][move[1]] = 2
+	eval = minimax(boarderi,False,0,-999,999)
+	boarderi[move[0]][move[1]] = 0
+
+	return eval,move
+
 
 def engine(board):
-	global depthcounter,eka,latestEval,bestEvalSoFar
+	global depthcounter
 	looppi = 0
 	parhaat_movet = []
 
@@ -514,52 +516,36 @@ def engine(board):
 
 	kaikki_movet = legal_moves(board)
 
-	for move in kaikki_movet:
-		looppi += 1
-		print(round(looppi/len(kaikki_movet)*100),"%")
+
+	print("LEN:",len(kaikki_movet))
+	a = 0
+	results = []
+
+	with concurrent.futures.ProcessPoolExecutor() as executor:
+		results = [executor.submit(subEngine,board,move) for move in kaikki_movet]
+
+		for f in concurrent.futures.as_completed(results):
+			print(f.result())
+			siirto = f.result()[1]
+			eval = f.result()[0]
+
+			if eval >= paras_move_eval:
+				paras_move = siirto
+				paras_move_eval = eval
+
+	#for move in kaikki_movet:
+	#	eval,move = subEngine(board,move)
+#
+#		if eval >= paras_move_eval:
+#			paras_move = move
+#			paras_move_eval = eval
 
 
-		if good_move(board,move):
-			depthcounter = depth
-		else:
-			depthcounter = depth-1
-
-		board[move[0]][move[1]] = 2
-
-		bestEvalSoFar = -9999
-		eval = minimax(board,False,0,-999,999)
-
-		if eval > bestEvalSoFar:
-			bestEvalSoFar = eval
-
-		board[move[0]][move[1]] = 0
-
-		if eval >= paras_move_eval:
-			parhaat_movet.append([move,eval])
-			paras_move_eval = eval
-
-	print("counter:",counter)
-	print(parhaat_movet)
-	best_eval = -9999
-	best_moves = []
-	for k in range(len(parhaat_movet)):
-	  if parhaat_movet[k][1] >= best_eval:
-	    if parhaat_movet[k][1] > best_eval:
-	      best_moves = []
-	    best_eval = parhaat_movet[k][1]
-	    best_moves.append(parhaat_movet[k][0])
-
-	final_move = random.choice(best_moves)
-	#if eka:
-	#	final_move = [2,3]
-	#	eka = False
-
-	latestEval = best_eval
-	print("Tämän moven evaluation on:",best_eval)
-	if best_eval == 1000:
+	print("Tämän moven evaluation on:",paras_move_eval)
+	if paras_move_eval == 1000:
 		print("haha wtf ez why so idiot????")
 
-	return final_move
+	return paras_move
 
 
 def good_move(board,move):
@@ -608,16 +594,22 @@ def good_move(board,move):
 
 	return False
 
-boared = [[0,0,0,0,0,0],
+
+
+
+
+testi = [[0,0,0,0,0,0],
 		[0,0,0,0,0,0],
-		[0,0,1,2,0,0],
-		[0,0,0,2,0,0],
+		[0,0,0,0,0,0],
+		[0,0,0,0,0,0],
 		[0,0,0,0,0,0],
 		[0,0,0,0,0,0]]
 
-#print("EVAL:",voitoncheck(testi))
-
 if __name__ == "__main__":
+	import pygame
+	pygame.init()
+	win = pygame.display.set_mode((size,size))
+	multiprocessing.freeze_support()
 	first_move = True
 	while True:
 		if keyboard.is_pressed("q"):
@@ -626,11 +618,11 @@ if __name__ == "__main__":
 			pygame.quit()
 			exit()
 
-		tila = game_over(board)
+		tila = game_over(lauta)
 
 		if vuoro%2 == 0:
 			if tila == False:
-				player_move()
+				player_move(lauta)
 
 		else:
 			if tila == False:
@@ -639,10 +631,10 @@ if __name__ == "__main__":
 
 				else:
 					alkuAika = time.time()
-					siirto = engine(board)
+					siirto = engine(lauta)
 					loppuAika = time.time()
 					print("Runtime:",str(round(loppuAika - alkuAika,2))+"s")
-				board[siirto[0]][siirto[1]] = 2
+				lauta[siirto[0]][siirto[1]] = 2
 				vuoro += 1
 
-		display()
+		display(lauta)
